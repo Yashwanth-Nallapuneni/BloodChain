@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🩸 BloodChain - Decentralized Blood Bank Registry</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #dc2626;
+      --primary-dark: #991b1b;
+      --secondary: #7c3aed;
+      --success: #16a34a;
+      --warning: #ea580c;
+      --bg: #0f172a;
+      --bg-light: #1e293b;
+      --bg-card: #334155;
+      --text: #f1f5f9;
+      --text-muted: #cbd5e1;
+      --border: #475569;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, #1e293b 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(220, 38, 38, 0.3);
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .wallet-section {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .wallet-info {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+
+    .wallet-info.connected {
+      display: block;
+    }
+
+    .wallet-address {
+      font-family: monospace;
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .token-balance {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #fbbf24;
+      margin-top: 5px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--secondary) 0%, #5b21b6 100%);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success) 0%, #15803d 100%);
+      color: white;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--bg-light);
+      padding: 25px;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card h3 {
+      font-size: 0.9em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      background: var(--bg-light);
+      padding: 10px;
+      border-radius: 15px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Content Sections */
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--bg-light);
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      color: var(--primary);
+      font-size: 1.8em;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1em;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    /* Blood Inventory */
+    .blood-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .blood-type-card {
+      background: var(--bg);
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .blood-type-card:hover {
+      border-color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .blood-type {
+      font-size: 2em;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .blood-quantity {
+      font-size: 1.5em;
+      color: var(--text);
+    }
+
+    .blood-label {
+      font-size: 0.9em;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      background: var(--bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-card);
+      color: var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+    }
+
+    tr:hover {
+      background: var(--bg-light);
+    }
+
+    .badge {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .badge-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    /* Notifications */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--success);
+      color: white;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .notification.show {
+      display: block;
+    }
+
+    .notification.error {
+      background: var(--primary);
+    }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .reward-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .header h1 {
+        font-size: 1.8em;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>
+        <span>🩸</span>
+        <span>BloodChain</span>
+      </h1>
+      <div class="wallet-section">
+        <div class="wallet-info" id="walletInfo">
+          <div class="wallet-address" id="walletAddress">Not Connected</div>
+          <div class="token-balance" id="tokenBalance">0 BLC</div>
+        </div>
+        <button class="btn btn-primary" id="connectWallet">Connect Wallet</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <h3>Total Donors</h3>
+        <div class="stat-value" id="totalDonors">0</div>
+        <div class="stat-label">Registered Users</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Donations</h3>
+        <div class="stat-value" id="totalDonations">0</div>
+        <div class="stat-label">Blood Units Collected</div>
+      </div>
+      <div class="stat-card">
+        <h3>Units Available</h3>
+        <div class="stat-value" id="totalUnits">0</div>
+        <div class="stat-label">ml in Inventory</div>
+      </div>
+      <div class="stat-card">
+        <h3>BLC Rewards</h3>
+        <div class="stat-value" id="totalRewards">0</div>
+        <div class="stat-label">Tokens Distributed</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab" onclick="switchTab('register')">✍️ Register Donor</button>
+      <button class="tab" onclick="switchTab('donate')">❤️ Record Donation</button>
+      <button class="tab" onclick="switchTab('inventory')">🏥 Blood Inventory</button>
+      <button class="tab" onclick="switchTab('donors')">👥 Donors</button>
+      <button class="tab" onclick="switchTab('history')">📜 Donation History</button>
+      <button class="tab" onclick="switchTab('wallet')">💰 My Wallet</button>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div class="content-section active" id="dashboard">
+      <div class="card">
+        <h2>Recent Donations</h2>
+        <div class="table-container">
+          <table id="recentDonationsTable">
+            <thead>
+              <tr>
+                <th>Donor</th>
+                <th>Blood Type</th>
+                <th>Quantity (ml)</th>
+                <th>Rewards</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentDonationsBody">
+              <tr><td colspan="5" style="text-align: center;">No donations yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Donor Section -->
+    <div class="content-section" id="register">
+      <div class="card">
+        <h2>Register as Donor</h2>
+        <form id="registerForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="donorName" required>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="donorEmail">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Blood Type *</label>
+              <select id="donorBloodType" required>
+                <option value="">Select Blood Type</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="donorPhone">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="donorAddress">
+          </div>
+          <div class="form-group">
+            <label>Wallet Address *</label>
+            <input type="text" id="donorWallet" readonly>
+            <small style="color: var(--text-muted);">Connect your wallet first</small>
+          </div>
+          <button type="submit" class="btn btn-primary">Register Donor</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Record Donation Section -->
+    <div class="content-section" id="donate">
+      <div class="card">
+        <h2>Record Blood Donation</h2>
+        <form id="donationForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Donor Wallet Address *</label>
+              <input type="text" id="donationWallet" required>
+            </div>
+            <div class="form-group">
+              <label>Blood Type *</label>
+              <select id="donationBloodType" required>
+                <option value="">Select Blood Type</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Quantity (ml) *</label>
+              <input type="number" id="donationQuantity" min="100" max="500" step="50" value="350" required>
+            </div>
+            <div class="form-group">
+              <label>Location *</label>
+              <input type="text" id="donationLocation" placeholder="e.g., City Hospital" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Hospital ID</label>
+            <input type="text" id="donationHospital" placeholder="HOSP001">
+          </div>
+          <button type="submit" class="btn btn-success">Record Donation & Issue Certificate</button>
+        </form>
+        <div class="loading" id="donationLoading">
+          <div class="spinner"></div>
+          <p>Processing donation and issuing certificate...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blood Inventory Section -->
+    <div class="content-section" id="inventory">
+      <div class="card">
+        <h2>Blood Inventory</h2>
+        <div class="blood-grid" id="bloodInventory">
+          <!-- Will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Donors Section -->
+    <div class="content-section" id="donors">
+      <div class="card">
+        <h2>Registered Donors</h2>
+        <div class="table-container">
+          <table id="donorsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Blood Type</th>
+                <th>Donations</th>
+                <th>BLC Rewards</th>
+                <th>Wallet</th>
+              </tr>
+            </thead>
+            <tbody id="donorsBody">
+              <tr><td colspan="6" style="text-align: center;">No donors registered</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donation History Section -->
+    <div class="content-section" id="history">
+      <div class="card">
+        <h2>Complete Donation History</h2>
+        <div class="table-container">
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Donor</th>
+                <th>Blood Type</th>
+                <th>Quantity</th>
+                <th>Location</th>
+                <th>Date</th>
+                <th>Certificate</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="7" style="text-align: center;">No donation history</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Wallet Section -->
+    <div class="content-section" id="wallet">
+      <div class="card">
+        <h2>My Wallet & Rewards</h2>
+        <div id="walletContent">
+          <p style="text-align: center; color: var(--text-muted); padding: 40px;">
+            Please connect your wallet to view your rewards
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification"></div>
+
+  <script>
+    let currentAccount = null;
+    let provider = null;
+    let signer = null;
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tabs
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update content
+      document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+
+      // Load data for specific tabs
+      if (tabName === 'inventory') loadInventory();
+      if (tabName === 'donors') loadDonors();
+      if (tabName === 'history') loadHistory();
+      if (tabName === 'wallet') loadWalletInfo();
+    }
+
+    // Connect Wallet
+    document.getElementById('connectWallet').addEventListener('click', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          currentAccount = accounts[0];
+          
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+
+          document.getElementById('walletAddress').textContent = 
+            currentAccount.slice(0, 6) + '...' + currentAccount.slice(-4);
+          document.getElementById('walletInfo').classList.add('connected');
+          document.getElementById('connectWallet').textContent = 'Connected';
+          document.getElementById('connectWallet').classList.add('btn-success');
+          document.getElementById('donorWallet').value = currentAccount;
+          document.getElementById('donationWallet').value = currentAccount;
+
+          showNotification('Wallet connected successfully!', 'success');
+          loadStats();
+        } catch (error) {
+          showNotification('Failed to connect wallet', 'error');
+          console.error(error);
+        }
+      } else {
+        showNotification('Please install MetaMask!', 'error');
+      }
+    });
+
+    // Register Donor
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentAccount) {
+        showNotification('Please connect your wallet first', 'error');
+        return;
+      }
+
+      const data = {
+        name: document.getElementById('donorName').value,
+        email: document.getElementById('donorEmail').value,
+        bloodType: document.getElementById('donorBloodType').value,
+        phone: document.getElementById('donorPhone').value,
+        address: document.getElementById('donorAddress').value,
+        walletAddress: currentAccount
+      };
+
+      try {
+        const response = await fetch('/api/donors/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification('Donor registered successfully! 🎉', 'success');
+          document.getElementById('registerForm').reset();
+          loadStats();
+        } else {
+          showNotification(result.message, 'error');
+        }
+      } catch (error) {
+        showNotification('Registration failed', 'error');
+        console.error(error);
+      }
+    });
+
+    // Record Donation
+    document.getElementById('donationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const data = {
+        donorWallet: document.getElementById('donationWallet').value,
+        bloodType: document.getElementById('donationBloodType').value,
+        quantity: document.getElementById('donationQuantity').value,
+        location: document.getElementById('donationLocation').value,
+        hospitalId: document.getElementById('donationHospital').value || 'HOSP001'
+      };
+
+      document.getElementById('donationLoading').style.display = 'block';
+
+      try {
+        const response = await fetch('/api/donations/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          let message = `Donation recorded! 🎉\n`;
+          message += `Rewards: ${result.rewards.total} BLC\n`;
+          if (result.rewards.bonus > 0) {
+            message += `🎁 Bonus: ${result.rewards.bonus} BLC (${result.rewards.donationCount} donations milestone!)`;
+          }
+          if (result.certificate) {
+            message += `\n📜 Certificate ID: ${result.certificate.number}`;
+          }
+          
+          showNotification(message, 'success');
+          document.getElementById('donationForm').reset();
+          loadStats();
+          loadInventory();
+        } else {
+          showNotification(result.message, 'error');
+        }
+      } catch (error) {
+        showNotification('Failed to record donation', 'error');
+        console.error(error);
+      } finally {
+        document.getElementById('donationLoading').style.display = 'none';
+      }
+    });
+
+    // Load Stats
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+
+        document.getElementById('totalDonors').textContent = data.totalDonors;
+        document.getElementById('totalDonations').textContent = data.totalDonations;
+        document.getElementById('totalUnits').textContent = data.totalUnitsCollected.toLocaleString();
+
+        // Calculate total rewards
+        const donorsResponse = await fetch('/api/donors');
+        const donorsData = await donorsResponse.json();
+        const totalRewards = donorsData.donors.reduce((sum, d) => sum + d.totalRewards, 0);
+        document.getElementById('totalRewards').textContent = totalRewards.toLocaleString();
+
+        // Update recent donations
+        const tbody = document.getElementById('recentDonationsBody');
+        if (data.recentDonations.length > 0) {
+          tbody.innerHTML = data.recentDonations.map(d => {
+            const donor = donorsData.donors.find(donor => donor.walletAddress?.toLowerCase() === d.donorWallet?.toLowerCase());
+            return `
+              <tr>
+                <td>${donor?.name || 'Unknown'}</td>
+                <td><span class="badge badge-warning">${d.bloodType}</span></td>
+                <td>${d.quantity} ml</td>
+                <td><span class="reward-badge">🪙 Rewarded</span></td>
+                <td>${new Date(d.timestamp).toLocaleString()}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    // Load Blood Inventory
+    async function loadInventory() {
+      try {
+        const response = await fetch('/api/inventory');
+        const data = await response.json();
+
+        const container = document.getElementById('bloodInventory');
+        container.innerHTML = Object.entries(data.inventory).map(([type, quantity]) => `
+          <div class="blood-type-card">
+            <div class="blood-type">${type}</div>
+            <div class="blood-quantity">${quantity}</div>
+            <div class="blood-label">ml available</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load inventory:', error);
+      }
+    }
+
+    // Load Donors
+    async function loadDonors() {
+      try {
+        const response = await fetch('/api/donors');
+        const data = await response.json();
+
+        const tbody = document.getElementById('donorsBody');
+        if (data.donors.length > 0) {
+          tbody.innerHTML = data.donors.map(d => `
+            <tr>
+              <td>${d.id}</td>
+              <td>${d.name}</td>
+              <td><span class="badge badge-warning">${d.bloodType}</span></td>
+              <td>${d.donationCount}</td>
+              <td><span class="reward-badge">${d.totalRewards} BLC</span></td>
+              <td><code>${d.walletAddress.slice(0, 6)}...${d.walletAddress.slice(-4)}</code></td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load donors:', error);
+      }
+    }
+
+    // Load History
+    async function loadHistory() {
+      try {
+        const response = await fetch('/api/donations');
+        const data = await response.json();
+
+        const tbody = document.getElementById('historyBody');
+        if (data.donations.length > 0) {
+          tbody.innerHTML = data.donations.map(d => `
+            <tr>
+              <td>${d.id}</td>
+              <td>${d.donorName}</td>
+              <td><span class="badge badge-warning">${d.bloodType}</span></td>
+              <td>${d.quantity} ml</td>
+              <td>${d.location}</td>
+              <td>${new Date(d.timestamp).toLocaleString()}</td>
+              <td>${d.certificateId ? `<span class="badge badge-success">✓ Issued</span>` : '-'}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load history:', error);
+      }
+    }
+
+    // Load Wallet Info
+    async function loadWalletInfo() {
+      if (!currentAccount) {
+        document.getElementById('walletContent').innerHTML = `
+          <p style="text-align: center; color: var(--text-muted); padding: 40px;">
+            Please connect your wallet to view your rewards
+          </p>
+        `;
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/donors/${currentAccount}`);
+        const data = await response.json();
+
+        if (data.donor) {
+          document.getElementById('walletContent').innerHTML = `
+            <div class="form-row">
+              <div class="stat-card">
+                <h3>Total Donations</h3>
+                <div class="stat-value">${data.stats.totalDonations}</div>
+              </div>
+              <div class="stat-card">
+                <h3>Total Rewards Earned</h3>
+                <div class="stat-value">${data.stats.totalRewards} BLC</div>
+              </div>
+              <div class="stat-card">
+                <h3>Token Balance</h3>
+                <div class="stat-value">${data.stats.tokenBalance.toFixed(2)} BLC</div>
+              </div>
+            </div>
+            <div style="margin-top: 30px;">
+              <h3>Your Donation History</h3>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Blood Type</th>
+                      <th>Quantity</th>
+                      <th>Location</th>
+                      <th>Certificate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${data.donations.length > 0 ? data.donations.map(d => `
+                      <tr>
+                        <td>${new Date(d.timestamp).toLocaleDateString()}</td>
+                        <td><span class="badge badge-warning">${d.bloodType}</span></td>
+                        <td>${d.quantity} ml</td>
+                        <td>${d.location}</td>
+                        <td>${d.certificateId ? `<span class="badge badge-success">✓ ${d.certificateId.slice(0, 8)}</span>` : '-'}</td>
+                      </tr>
+                    `).join('') : '<tr><td colspan="5" style="text-align: center;">No donations yet</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById('walletContent').innerHTML = `
+            <p style="text-align: center; color: var(--text-muted); padding: 40px;">
+              You are not registered as a donor. Please register first!
+            </p>
+          `;
+        }
+      } catch (error) {
+        console.error('Failed to load wallet info:', error);
+      }
+    }
+
+    // Show Notification
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type} show`;
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 5000);
+    }
+
+    // Initialize
+    loadStats();
+    setInterval(loadStats, 30000); // Refresh every 30 seconds
+  </script>
+</body>
+</html>
