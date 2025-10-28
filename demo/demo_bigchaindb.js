@@ -5,7 +5,7 @@
  * This will show how certificates are issued and verified
  */
 
-const BigChainDBService = require('./bigchaindb.js');
+const BigChainDBService = require('../src/bigchaindb.js');
 
 // Sample donor data
 const sampleDonors = [

@@ -41,6 +41,21 @@ BloodChain is a decentralized platform that maintains real-time blood availabili
 └─────────────────────┘              └───────────────────┘
 ```
 
+## 📁 Project Structure
+
+```
+BloodChain/
+├── contracts/      # Smart contracts (Solidity)
+├── scripts/        # Deployment scripts
+├── src/            # Backend source (server.js, bigchaindb.js)
+├── public/         # Frontend dashboard
+├── demo/           # Demo scripts
+├── docs/           # Documentation
+└── uploads/        # File storage
+```
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure.
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -114,7 +129,14 @@ Or for development with auto-reload:
 npm run dev
 ```
 
-### Step 6: Access the Dashboard
+### Step 6: Run Demo (Optional)
+
+Generate sample BigchainDB certificate data:
+```bash
+npm run demo
+```
+
+### Step 7: Access the Dashboard
 
 Open your browser and navigate to:
 ```
