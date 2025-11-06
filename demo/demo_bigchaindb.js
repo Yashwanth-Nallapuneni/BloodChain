@@ -3,7 +3,6 @@
  * 
  * Run this to demonstrate BigchainDB integration for your project report
  * This will show how certificates are issued and verified
- * https://link.clashroyale.com/invite/friend/en?tag=P90J9999Y&token=kash9am6&platform=android
  */
 
 const BigChainDBService = require('../src/bigchaindb.js');
