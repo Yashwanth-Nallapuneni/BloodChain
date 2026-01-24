@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title BloodBank
- * allows user to manage transfers 
+ * allows user to manage transfers and send tokens
  * @dev Smart Contract for managing blood donations and requests
  */
 contract BloodBank {
